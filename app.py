@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # ═══════════════════════════════════════════════════════════════════
-#   SUN68 - CASINO TÀI XỈU ONLINE (NHIỀU FILE)
-#   Version: 3.0 | Flask + SQLite | Giao diện Sunwin
+#   SUN68 - CASINO TÀI XỈU ONLINE
+#   Version: 5.0 | Nhiều file templates
 #   Cấu trúc: app.py + app/templates/
+#   HQuanz Studio
 # ═══════════════════════════════════════════════════════════════════
 
 import os
@@ -20,15 +21,22 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import func, desc
 
 # ═══════════════════════════════════════════════════════════════════
-#  CONFIG
+#  CONFIG - CHỈ ĐỊNH ĐÚNG ĐƯỜNG DẪN TEMPLATE
 # ═══════════════════════════════════════════════════════════════════
+
+# Lấy đường dẫn tuyệt đối của thư mục chứa file app.py
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Chỉ định thư mục templates nằm trong app/templates/
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'app', 'templates')
 
+# Khởi tạo Flask với template_folder chỉ định
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
+
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'sun68-secret-key-change-me')
 
-# ─── DATABASE ──────────────────────────────────────────────────────
+# ─── DATABASE (SQLite trong /tmp) ──────────────────────────────
+import shutil
 DATA_DIR = '/tmp/sun68_data'
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
@@ -161,7 +169,8 @@ def check_bonus_requirement(user):
         BetHistory.is_win.isnot(None)
     ).scalar() or 0
     
-    required = (50000 + 200000) * 3
+    required = (50000 + 200000) * 3  # 250k * 3 = 750k
+    
     if total_bet >= required:
         user.bonus_requirements_met = True
         db.session.commit()
@@ -169,7 +178,7 @@ def check_bonus_requirement(user):
     return False
 
 # ═══════════════════════════════════════════════════════════════════
-#  ROUTES
+#  ROUTES - PUBLIC
 # ═══════════════════════════════════════════════════════════════════
 @app.route('/')
 def index():
@@ -391,7 +400,7 @@ def history():
     return render_template('history.html', bets=bets)
 
 # ═══════════════════════════════════════════════════════════════════
-#  API
+#  API - BET
 # ═══════════════════════════════════════════════════════════════════
 @app.route('/api/bet', methods=['POST'])
 @login_required
@@ -411,7 +420,7 @@ def place_bet():
     
     current_round = get_current_round()
     if (datetime.utcnow() - current_round.created_at).seconds > 50:
-        return jsonify({'error': 'Đã hết thời gian đặt cược'}), 400
+        return jsonify({'error': 'Đã hết thời gian đặt cược, chờ vòng mới'}), 400
     
     current_user.balance -= bet_amount
     current_user.total_bet += bet_amount
@@ -444,7 +453,7 @@ def get_round_result():
     })
 
 # ═══════════════════════════════════════════════════════════════════
-#  ADMIN
+#  ADMIN ROUTES
 # ═══════════════════════════════════════════════════════════════════
 def admin_required(f):
     @wraps(f)
@@ -485,6 +494,124 @@ def admin_users():
 def admin_transactions():
     transactions = Transaction.query.order_by(Transaction.created_at.desc()).all()
     return render_template('admin/transactions.html', transactions=transactions)
+
+@app.route('/admin/bank-info', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_bank_info():
+    bank_info = {
+        'bank_name': 'Ngân hàng TMCP Ngoại thương Việt Nam (Vietcombank)',
+        'account_number': '1234567890',
+        'account_holder': 'SUN68 CASINO',
+        'branch': 'Hà Nội'
+    }
+    
+    if request.method == 'POST':
+        bank_info['bank_name'] = request.form.get('bank_name')
+        bank_info['account_number'] = request.form.get('account_number')
+        bank_info['account_holder'] = request.form.get('account_holder')
+        bank_info['branch'] = request.form.get('branch')
+        flash('Đã cập nhật thông tin ngân hàng', 'success')
+        return redirect(url_for('admin_bank_info'))
+    
+    return render_template('admin/bank_info.html', bank_info=bank_info)
+
+@app.route('/admin/bonus')
+@login_required
+@admin_required
+def admin_bonus():
+    users = User.query.filter_by(first_deposit_bonus=True, bonus_requirements_met=False).all()
+    return render_template('admin/bonus.html', users=users)
+
+@app.route('/admin/bonus/grant', methods=['POST'])
+@login_required
+@admin_required
+def admin_grant_bonus():
+    user_id = request.form.get('user_id')
+    amount = float(request.form.get('amount', 0))
+    reason = request.form.get('reason', '')
+    
+    user = User.query.get_or_404(user_id)
+    
+    if amount <= 0:
+        flash('Số tiền phải > 0', 'danger')
+        return redirect(url_for('admin_bonus'))
+    
+    user.balance += amount
+    user.first_deposit_bonus = True
+    
+    transaction = Transaction(
+        user_id=user.id,
+        type='bonus',
+        amount=amount,
+        status='approved',
+        method='system',
+        description=f'Bonus SUN68 từ admin: {reason}'
+    )
+    db.session.add(transaction)
+    db.session.commit()
+    
+    flash(f'Đã tặng {amount:,.0f} VND cho {user.username}', 'success')
+    return redirect(url_for('admin_bonus'))
+
+@app.route('/admin/ranking-gift', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def admin_ranking_gift():
+    if request.method == 'POST':
+        rank_type = request.form.get('rank_type')
+        rank_period = request.form.get('rank_period')
+        amount = float(request.form.get('amount', 0))
+        
+        if rank_type == 'top_deposit':
+            if rank_period == 'daily':
+                date_filter = datetime.utcnow().date()
+                users = db.session.query(
+                    User.id, func.sum(Transaction.amount).label('total')
+                ).join(Transaction)\
+                 .filter(Transaction.type == 'deposit',
+                         Transaction.status == 'approved',
+                         func.date(Transaction.created_at) == date_filter)\
+                 .group_by(User.id)\
+                 .order_by(func.sum(Transaction.amount).desc()).limit(10).all()
+            else:
+                month_start = datetime(datetime.utcnow().year, datetime.utcnow().month, 1)
+                users = db.session.query(
+                    User.id, func.sum(Transaction.amount).label('total')
+                ).join(Transaction)\
+                 .filter(Transaction.type == 'deposit',
+                         Transaction.status == 'approved',
+                         Transaction.created_at >= month_start)\
+                 .group_by(User.id)\
+                 .order_by(func.sum(Transaction.amount).desc()).limit(10).all()
+        else:
+            users = db.session.query(
+                User.id, func.sum(BetHistory.bet_amount).label('total')
+            ).join(BetHistory)\
+             .group_by(User.id)\
+             .order_by(func.sum(BetHistory.bet_amount).desc()).limit(10).all()
+        
+        for rank, user_data in enumerate(users, 1):
+            user = User.query.get(user_data.id)
+            if user:
+                bonus_amount = amount * (1 - (rank - 1) * 0.1)
+                if bonus_amount >= 10000:
+                    user.balance += bonus_amount
+                    transaction = Transaction(
+                        user_id=user.id,
+                        type='bonus',
+                        amount=bonus_amount,
+                        status='approved',
+                        method='system',
+                        description=f'Thưởng xếp hạng SUN68 {rank_type} - vị trí #{rank}'
+                    )
+                    db.session.add(transaction)
+        
+        db.session.commit()
+        flash('Đã trao thưởng xếp hạng SUN68 thành công', 'success')
+        return redirect(url_for('admin_ranking_gift'))
+    
+    return render_template('admin/ranking_gift.html')
 
 @app.route('/admin/transaction/<int:txn_id>/approve', methods=['POST'])
 @login_required
@@ -543,7 +670,7 @@ def admin_reject_transaction(txn_id):
     return redirect(url_for('admin_transactions'))
 
 # ═══════════════════════════════════════════════════════════════════
-#  BACKGROUND TASK
+#  BACKGROUND TASK - AUTO ROUND
 # ═══════════════════════════════════════════════════════════════════
 def auto_generate_rounds():
     while True:
@@ -580,7 +707,7 @@ def auto_generate_rounds():
             db.session.commit()
             print(f"✅ SUN68 Vòng {new_round.round_id}: {result}")
         except Exception as e:
-            print(f"⚠️ Lỗi auto: {e}")
+            print(f"⚠️ Lỗi auto_generate_rounds: {e}")
             db.session.rollback()
         time.sleep(5)
 
@@ -597,7 +724,7 @@ if __name__ == '__main__':
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-            print("✅ Admin SUN68: admin / admin123")
+            print("✅ Đã tạo admin SUN68: admin / admin123")
     
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
