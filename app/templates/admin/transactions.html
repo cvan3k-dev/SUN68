@@ -1,0 +1,50 @@
+{% extends "admin/layout_admin.html" %}
+
+{% block admin_title %}Transactions{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+    <div class="card-header">
+        <h5>Quản lý giao dịch SUN68</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-dark">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                <tr>
+                    <td>{{ txn.id }}</td>
+                    <td>{{ txn.user.username if txn.user else 'N/A' }}</td>
+                    <td>{{ txn.type }}</td>
+                    <td>{{ txn.amount|int|format_currency }}</td>
+                    <td>{{ txn.method }}</td>
+                    <td>{{ txn.status }}</td>
+                    <td>
+                        {% if txn.status == 'pending' %}
+                            <form method="POST" action="{{ url_for('admin_approve_transaction', txn_id=txn.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-success">Duyệt</button>
+                            </form>
+                            <form method="POST" action="{{ url_for('admin_reject_transaction', txn_id=txn.id) }}" style="display:inline;">
+                                <button type="submit" class="btn btn-sm btn-danger">Từ chối</button>
+                            </form>
+                        {% else %}
+                            <span class="text-muted">Đã xử lý</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "admin/layout_admin.html" %}
+
+{% block admin_title %}User: {{ user.username }}{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>Thông tin user SUN68</h5>
+            </div>
+            <ul class="list-group list-group-flush bg-transparent">
+                <li class="list-group-item bg-transparent"><strong>ID:</strong> {{ user.id }}</li>
+                <li class="list-group-item bg-transparent"><strong>Username:</strong> {{ user.username }}</li>
+                <li class="list-group-item bg-transparent"><strong>Display:</strong> {{ user.display_name }}</li>
+                <li class="list-group-item bg-transparent"><strong>Balance:</strong> {{ user.balance|int|format_currency }}</li>
+                <li class="list-group-item bg-transparent"><strong>Total Deposit:</strong> {{ user.total_deposited|int|format_currency }}</li>
+                <li class="list-group-item bg-transparent"><strong>Total Bet:</strong> {{ user.total_bet|int|format_currency }}</li>
+                <li class="list-group-item bg-transparent"><strong>Total Win:</strong> {{ user.total_win|int|format_currency }}</li>
+                <li class="list-group-item bg-transparent"><strong>Status:</strong> {{ 'Active' if user.is_active else 'Blocked' }}</li>
+                <li class="list-group-item bg-transparent"><strong>Created:</strong> {{ user.created_at.strftime('%d/%m/%Y %H:%M') }}</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Điều chỉnh số dư SUN68</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('admin_adjust_balance', user_id=user.id) }}">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <select name="action" class="form-control" required>
+                                <option value="add">Cộng tiền</option>
+                                <option value="subtract">Trừ tiền</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="number" name="amount" class="form-control" placeholder="Số tiền" required>
+                        </div>
+                        <div class="col-md-4">
+                            <input type="text" name="reason" class="form-control" placeholder="Lý do">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-gold mt-2">Thực hiện</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h5>Lịch sử giao dịch SUN68</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-dark table-sm">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Amount</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for txn in transactions %}
+                        <tr>
+                            <td>{{ txn.type }}</td>
+                            <td>{{ txn.amount|int|format_currency }}</td>
+                            <td>{{ txn.status }}</td>
+                            <td>{{ txn.created_at.strftime('%H:%M %d/%m') }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

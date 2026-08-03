@@ -1,0 +1,32 @@
+{% extends "admin/layout_admin.html" %}
+
+{% block admin_title %}Bank Info{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+    <div class="card-header">
+        <h5>Cập nhật thông tin ngân hàng SUN68</h5>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="mb-3">
+                <label class="form-label">Tên ngân hàng</label>
+                <input type="text" name="bank_name" class="form-control" value="{{ bank_info.bank_name }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Số tài khoản</label>
+                <input type="text" name="account_number" class="form-control" value="{{ bank_info.account_number }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Chủ tài khoản</label>
+                <input type="text" name="account_holder" class="form-control" value="{{ bank_info.account_holder }}" required>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Chi nhánh</label>
+                <input type="text" name="branch" class="form-control" value="{{ bank_info.branch }}" required>
+            </div>
+            <button type="submit" class="btn btn-gold">Cập nhật SUN68</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

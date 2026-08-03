@@ -1,0 +1,39 @@
+{% extends "layout.html" %}
+
+{% block title %}Hồ sơ SUN68{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card p-4">
+            <h3 class="text-center text-gold"><i class="fas fa-user"></i> Hồ sơ SUN68</h3>
+            <ul class="list-group list-group-flush bg-transparent">
+                <li class="list-group-item bg-transparent text-light">
+                    <strong>ID:</strong> {{ user.id }}
+                </li>
+                <li class="list-group-item bg-transparent text-light">
+                    <strong>Tên đăng nhập:</strong> {{ user.username }}
+                </li>
+                <li class="list-group-item bg-transparent text-light">
+                    <strong>Tên hiển thị:</strong> {{ user.display_name }}
+                </li>
+                <li class="list-group-item bg-transparent text-light">
+                    <strong>Số dư SUN68:</strong> {{ user.balance|int|format_currency }}
+                </li>
+                <li class="list-group-item bg-transparent text-light">
+                    <strong>Tổng nạp SUN68:</strong> {{ user.total_deposited|int|format_currency }}
+                </li>
+                <li class="list-group-item bg-transparent text-light">
+                    <strong>Tổng cược SUN68:</strong> {{ user.total_bet|int|format_currency }}
+                </li>
+                <li class="list-group-item bg-transparent text-light">
+                    <strong>Tổng thắng SUN68:</strong> {{ user.total_win|int|format_currency }}
+                </li>
+                <li class="list-group-item bg-transparent text-light">
+                    <strong>Ngày đăng ký:</strong> {{ user.created_at.strftime('%d/%m/%Y %H:%M') }}
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

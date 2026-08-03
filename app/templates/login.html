@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+
+{% block title %}Đăng nhập SUN68{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h3 class="text-center text-gold"><i class="fas fa-sign-in-alt"></i> Đăng nhập SUN68</h3>
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Tên đăng nhập</label>
+                    <input type="text" name="username" class="form-control bg-dark text-light" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Mật khẩu</label>
+                    <input type="password" name="password" class="form-control bg-dark text-light" required>
+                </div>
+                <button type="submit" class="btn btn-gold w-100">Đăng nhập SUN68</button>
+            </form>
+            <div class="text-center mt-3">
+                <a href="{{ url_for('register') }}" class="text-gold">Chưa có tài khoản SUN68? Đăng ký</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

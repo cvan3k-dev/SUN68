@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block title %}Rút tiền SUN68{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card p-4">
+            <h3 class="text-center text-gold"><i class="fas fa-minus-circle"></i> Rút tiền SUN68</h3>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 
+                <strong>Lưu ý SUN68:</strong> Tối thiểu {{ min_withdraw|int|format_currency }}, 
+                tối đa {{ max_withdraw|int|format_currency }}.<br>
+                Admin SUN68 sẽ duyệt đơn rút trong vòng 24h.
+            </div>
+
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Số tiền rút (VND)</label>
+                    <input type="number" name="amount" class="form-control" required 
+                           min="{{ min_withdraw }}" max="{{ max_withdraw }}">
+                    <small class="text-muted">Tối thiểu {{ min_withdraw|int|format_currency }}</small>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tên ngân hàng</label>
+                    <input type="text" name="bank_name" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Số tài khoản</label>
+                    <input type="text" name="bank_account" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Chủ tài khoản</label>
+                    <input type="text" name="bank_holder" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-gold w-100">Tạo đơn rút SUN68</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "layout.html" %}
+
+{% block title %}Bảng xếp hạng SUN68{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h5 class="text-gold"><i class="fas fa-trophy"></i> Top nạp ngày SUN68</h5>
+            <div class="table-responsive">
+                <table class="table table-dark">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Số tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in top_deposit_daily %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ user.display_name or user.username }}</td>
+                            <td>{{ user.total_deposit|int|format_currency }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center">Chưa có dữ liệu</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h5 class="text-gold"><i class="fas fa-trophy"></i> Top nạp tháng SUN68</h5>
+            <div class="table-responsive">
+                <table class="table table-dark">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Số tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in top_deposit_monthly %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ user.display_name or user.username }}</td>
+                            <td>{{ user.total_deposit|int|format_currency }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="3" class="text-center">Chưa có dữ liệu</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-12 mt-3">
+        <div class="card p-3">
+            <h5 class="text-gold"><i class="fas fa-trophy"></i> Top cược SUN68</h5>
+            <div class="table-responsive">
+                <table class="table table-dark">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>User</th>
+                            <th>Tổng cược</th>
+                            <th>Tổng thắng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in top_bet %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ user.display_name or user.username }}</td>
+                            <td>{{ user.total_bet|int|format_currency }}</td>
+                            <td>{{ user.total_win|int|format_currency }}</td>
+                        </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center">Chưa có dữ liệu</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

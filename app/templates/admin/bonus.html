@@ -1,0 +1,43 @@
+{% extends "admin/layout_admin.html" %}
+
+{% block admin_title %}Bonus{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+    <div class="card-header">
+        <h5>Quản lý Bonus SUN68</h5>
+    </div>
+    <div class="card-body">
+        <h6>User đã nhận bonus nạp đầu nhưng chưa đạt x3 vòng cược</h6>
+        <table class="table table-dark">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Balance</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.balance|int|format_currency }}</td>
+                    <td>
+                        <form method="POST" action="{{ url_for('admin_grant_bonus') }}">
+                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                            <input type="number" name="amount" placeholder="Số tiền bonus" required>
+                            <input type="text" name="reason" placeholder="Lý do">
+                            <button type="submit" class="btn btn-sm btn-gold">Tặng bonus</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="4">Không có user nào đang chờ bonus</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "layout.html" %}
+
+{% block title %}Nạp tiền SUN68{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card p-4">
+            <h3 class="text-center text-gold"><i class="fas fa-plus-circle"></i> Nạp tiền SUN68</h3>
+            
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 
+                <strong>Khuyến mãi SUN68:</strong> Nạp 50k tặng 200k (tổng 250k). 
+                Yêu cầu x3 vòng cược (750k) trước khi rút.
+            </div>
+
+            <ul class="nav nav-tabs" id="depositTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" data-bs-toggle="tab" href="#bank">Chuyển khoản</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="tab" href="#card">Thẻ cào</a>
+                </li>
+            </ul>
+
+            <div class="tab-content mt-3">
+                <!-- Bank Transfer -->
+                <div class="tab-pane fade show active" id="bank">
+                    <div class="alert alert-success">
+                        <h6><i class="fas fa-university"></i> Thông tin chuyển khoản SUN68</h6>
+                        <p><strong>Ngân hàng:</strong> {{ bank_info.bank_name }}</p>
+                        <p><strong>Số tài khoản:</strong> {{ bank_info.account_number }}</p>
+                        <p><strong>Chủ tài khoản:</strong> {{ bank_info.account_holder }}</p>
+                        <p><strong>Chi nhánh:</strong> {{ bank_info.branch }}</p>
+                        <p><strong>Nội dung:</strong> ID SUN68 của bạn ({{ current_user.id }})</p>
+                    </div>
+                    
+                    <form method="POST">
+                        <input type="hidden" name="method" value="bank_transfer">
+                        <div class="mb-3">
+                            <label class="form-label">Số tiền nạp (VND)</label>
+                            <input type="number" name="amount" class="form-control" required min="10000">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Nội dung chuyển khoản</label>
+                            <input type="text" name="bank_note" class="form-control" value="SUN68 ID:{{ current_user.id }}" readonly>
+                        </div>
+                        <button type="submit" class="btn btn-gold w-100">Tạo lệnh nạp SUN68</button>
+                    </form>
+                </div>
+
+                <!-- Card -->
+                <div class="tab-pane fade" id="card">
+                    <form method="POST">
+                        <input type="hidden" name="method" value="card">
+                        <div class="mb-3">
+                            <label class="form-label">Nhà mạng</label>
+                            <select name="card_provider" class="form-control" required>
+                                <option value="VIETTEL">Viettel</option>
+                                <option value="VINAPHONE">Vinaphone</option>
+                                <option value="MOBIFONE">Mobifone</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mệnh giá (VND)</label>
+                            <select name="amount" class="form-control" required>
+                                <option value="10000">10,000</option>
+                                <option value="20000">20,000</option>
+                                <option value="50000">50,000</option>
+                                <option value="100000">100,000</option>
+                                <option value="200000">200,000</option>
+                                <option value="500000">500,000</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Mã thẻ</label>
+                            <input type="text" name="card_code" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Số serial</label>
+                            <input type="text" name="card_serial" class="form-control" required>
+                        </div>
+                        <button type="submit" class="btn btn-gold w-100">Nạp thẻ SUN68</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

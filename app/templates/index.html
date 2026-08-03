@@ -1,0 +1,168 @@
+{% extends "layout.html" %}
+
+{% block title %}Bàn Tài Xỉu - SUN68{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Left Column -->
+    <div class="col-lg-8">
+        <div class="card p-4">
+            <h3 class="text-center text-gold">
+                <i class="fas fa-dice"></i> BÀN TÀI XỈU SUN68
+                <span class="badge bg-warning text-dark ms-2" id="timer-display">50s</span>
+            </h3>
+            
+            <!-- Result -->
+            <div id="result-display" class="result-box result-pending text-center">
+                <span id="result-text">ĐANG CHỜ...</span>
+                <br>
+                <small class="text-muted" id="hash-display">Hash: Đang tạo...</small>
+            </div>
+
+            <!-- Bet Buttons -->
+            <div class="row mt-3">
+                <div class="col-6">
+                    <button class="btn btn-red bet-btn" onclick="placeBet('TAI')">
+                        <i class="fas fa-arrow-up"></i> TÀI
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button class="btn bet-btn" onclick="placeBet('XIU')" style="background: linear-gradient(135deg, #0000cc, #0066ff); color: white;">
+                        <i class="fas fa-arrow-down"></i> XỈU
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bet Amount -->
+            <div class="row mt-3">
+                <div class="col-md-6 mx-auto">
+                    <div class="input-group">
+                        <span class="input-group-text bg-dark text-gold">Số tiền</span>
+                        <input type="number" id="bet-amount" class="form-control" value="10000" min="1000">
+                        <button class="btn btn-outline-gold" onclick="setBetAmount(10000)">10k</button>
+                        <button class="btn btn-outline-gold" onclick="setBetAmount(50000)">50k</button>
+                        <button class="btn btn-outline-gold" onclick="setBetAmount(100000)">100k</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History -->
+            <div class="mt-4">
+                <h5 class="text-gold"><i class="fas fa-history"></i> Lịch sử 50 phiên</h5>
+                <div id="history-container" class="d-flex flex-wrap">
+                    {% for round in history %}
+                        <span class="history-item-{{ 'tai' if round.result == 'TAI' else 'xiu' }}">
+                            {{ 'T' if round.result == 'TAI' else 'X' }}
+                        </span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column -->
+    <div class="col-lg-4">
+        <div class="card p-3">
+            <h5 class="text-gold"><i class="fas fa-user"></i> {{ current_user.display_name if current_user.is_authenticated else 'Khách' }}</h5>
+            <hr>
+            <div class="balance-display mb-3">
+                <i class="fas fa-wallet"></i> Số dư: 
+                <span id="user-balance">{{ current_user.balance|int if current_user.is_authenticated else 0 }}</span> VND
+            </div>
+            
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('deposit') }}" class="btn btn-gold w-100 mb-2">
+                    <i class="fas fa-plus-circle"></i> Nạp tiền
+                </a>
+                <a href="{{ url_for('withdraw') }}" class="btn btn-outline-gold w-100">
+                    <i class="fas fa-minus-circle"></i> Rút tiền
+                </a>
+            {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-gold w-100">Đăng nhập SUN68</a>
+            {% endif %}
+        </div>
+
+        <div class="card p-3 mt-3">
+            <h6 class="text-gold"><i class="fas fa-link"></i> Tiện ích</h6>
+            <div class="d-grid gap-2">
+                <a href="{{ url_for('ranking') }}" class="btn btn-outline-gold btn-sm">
+                    <i class="fas fa-trophy"></i> Bảng xếp hạng
+                </a>
+                <a href="{{ url_for('history') }}" class="btn btn-outline-gold btn-sm">
+                    <i class="fas fa-list"></i> Lịch sử cược
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentRound = {{ current_round.round_id if current_round else 0 }};
+    let interval = {{ interval }};
+    let timer = interval;
+
+    function updateGame() {
+        $.get('/api/round_result', function(data) {
+            if (data.result) {
+                let resultClass = data.result === 'TAI' ? 'result-tai' : 'result-xiu';
+                let resultText = data.result === 'TAI' ? '🔴 TÀI' : '🔵 XỈU';
+                
+                $('#result-display').removeClass('result-pending result-tai result-xiu')
+                                   .addClass(resultClass);
+                $('#result-text').html(resultText);
+                $('#hash-display').text(`🔒 Hash: ${data.hash_md5.substring(0, 16)}...`);
+            }
+
+            if (data.history) {
+                let html = '';
+                data.history.slice(0, 50).forEach(function(item) {
+                    let cls = item.result === 'TAI' ? 'history-item-tai' : 'history-item-xiu';
+                    let txt = item.result === 'TAI' ? 'T' : 'X';
+                    html += `<span class="${cls}">${txt}</span>`;
+                });
+                $('#history-container').html(html);
+            }
+
+            timer = data.time_remaining || 0;
+            $('#timer-display').text(Math.ceil(timer) + 's');
+        });
+    }
+
+    function placeBet(type) {
+        let amount = parseInt($('#bet-amount').val());
+        if (amount <= 0) {
+            alert('Vui lòng nhập số tiền hợp lệ');
+            return;
+        }
+
+        $.ajax({
+            url: '/api/bet',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                bet_type: type,
+                bet_amount: amount
+            }),
+            success: function(data) {
+                if (data.success) {
+                    $('#user-balance').text(data.new_balance);
+                    alert('✅ ' + data.message);
+                } else {
+                    alert('❌ ' + data.error);
+                }
+            },
+            error: function(xhr) {
+                alert('❌ Lỗi hệ thống: ' + (xhr.responseJSON?.error || 'Vui lòng thử lại'));
+            }
+        });
+    }
+
+    function setBetAmount(amount) {
+        $('#bet-amount').val(amount);
+    }
+
+    // Auto update
+    setInterval(updateGame, 5000);
+    updateGame();
+</script>
+{% endblock %}

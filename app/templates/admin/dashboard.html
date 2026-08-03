@@ -1,0 +1,70 @@
+{% extends "admin/layout_admin.html" %}
+
+{% block admin_title %}Dashboard{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-gold">{{ total_users }}</h5>
+                <p>Tổng user SUN68</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-gold">{{ total_balance|int|format_currency }}</h5>
+                <p>Tổng số dư SUN68</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-warning">{{ pending_deposits }}</h5>
+                <p>Nạp chờ duyệt</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <h5 class="text-danger">{{ pending_withdraws }}</h5>
+                <p>Rút chờ duyệt</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5>Giao dịch SUN68 gần đây</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-dark">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Loại</th>
+                    <th>Số tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Thời gian</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in recent_transactions %}
+                <tr>
+                    <td>{{ txn.user.username if txn.user else 'N/A' }}</td>
+                    <td>{{ txn.type }}</td>
+                    <td>{{ txn.amount|int|format_currency }}</td>
+                    <td>{{ txn.status }}</td>
+                    <td>{{ txn.created_at.strftime('%H:%M %d/%m') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
