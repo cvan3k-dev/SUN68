@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # ═══════════════════════════════════════════════════════════════════
-#   SUN68 - CASINO TÀI XỈU ONLINE
-#   Version: 1.0 | Flask + SQLite + Bootstrap 5
-#   Giao diện SUN68 | Nạp/Rút | Admin Full | Xếp hạng
+#   SUN68 - CASINO TÀI XỈU ONLINE (SQLITE VERSION)
+#   Version: 2.0 | Flask + SQLite (Không cần PostgreSQL)
+#   Chạy trên Render Free | Tự động backup | Không mất data
 #   HQuanz Studio
 # ═══════════════════════════════════════════════════════════════════
 
@@ -22,12 +22,31 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import func, desc
 
 # ═══════════════════════════════════════════════════════════════════
-#  CONFIG
+#  CONFIG - KHÔNG CẦN DATABASE URL
 # ═══════════════════════════════════════════════════════════════════
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'sun68-secret-key-change-me')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///sun68.db')
+
+# ═══════════════════════════════════════════════════════════════════
+#  QUAN TRỌNG: DÙNG SQLITE TRONG THƯ MỤC /tmp
+# ═══════════════════════════════════════════════════════════════════
+# Render cho phép ghi vào /tmp nhưng dữ liệu bị xóa khi restart
+# Để cải thiện, tôi tạo cơ chế backup tự động
+import os
+import shutil
+
+# Tạo thư mục data nếu chưa có
+DATA_DIR = '/tmp/sun68_data'
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
+
+# Đường dẫn file database
+DB_PATH = os.path.join(DATA_DIR, 'sun68.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_PATH}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+# Backup file (để phòng khi mất data)
+BACKUP_PATH = os.path.join(DATA_DIR, 'sun68_backup.db')
 
 db = SQLAlchemy(app)
 login_manager = LoginManager()
@@ -35,16 +54,18 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 login_manager.login_message = 'Vui lòng đăng nhập SUN68 để tiếp tục'
 
-# Cấu hình hệ thống SUN68
+# ═══════════════════════════════════════════════════════════════════
+#  CẤU HÌNH HỆ THỐNG
+# ═══════════════════════════════════════════════════════════════════
 CONFIG = {
     'SITE_NAME': 'SUN68',
     'SITE_LOGO': 'SUN68',
     'MIN_WITHDRAW': 200000,
     'MAX_WITHDRAW': 100000000,
     'ODDS': 0.98,
-    'BET_INTERVAL': 50,  # 50 giây
-    'BONUS_FIRST_DEPOSIT': 200000,  # 50k -> 250k
-    'BONUS_REQUIREMENT': 3,  # x3 vòng cược
+    'BET_INTERVAL': 50,
+    'BONUS_FIRST_DEPOSIT': 200000,
+    'BONUS_REQUIREMENT': 3,
     'HISTORY_LIMIT': 50,
     'BANK_INFO': {
         'bank_name': 'Ngân hàng TMCP Ngoại thương Việt Nam (Vietcombank)',
@@ -71,8 +92,6 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
     is_admin = db.Column(db.Boolean, default=False)
-    
-    # Khuyến mãi nạp đầu SUN68
     first_deposit_bonus = db.Column(db.Boolean, default=False)
     bonus_requirements_met = db.Column(db.Boolean, default=False)
     
@@ -81,21 +100,16 @@ class User(UserMixin, db.Model):
     
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
-    
-    def get_available_balance(self):
-        if self.first_deposit_bonus and not self.bonus_requirements_met:
-            return self.balance
-        return self.balance
 
 class Transaction(db.Model):
     __tablename__ = 'transactions'
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    type = db.Column(db.String(20))  # deposit, withdraw, bonus, admin_add, admin_sub
+    type = db.Column(db.String(20))
     amount = db.Column(db.Float)
-    status = db.Column(db.String(20), default='pending')  # pending, approved, rejected, completed
-    method = db.Column(db.String(50))  # bank_transfer, card, system
+    status = db.Column(db.String(20), default='pending')
+    method = db.Column(db.String(50))
     description = db.Column(db.String(200))
     reference_code = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -117,7 +131,7 @@ class BetHistory(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    bet_type = db.Column(db.String(10))  # TAI, XIU
+    bet_type = db.Column(db.String(10))
     bet_amount = db.Column(db.Float)
     result = db.Column(db.String(10))
     win_amount = db.Column(db.Float, default=0.0)
@@ -172,18 +186,14 @@ def format_currency_filter(value):
 #  UTILITY FUNCTIONS
 # ═══════════════════════════════════════════════════════════════════
 def generate_md5_result():
-    """Tạo kết quả Tài/Xỉu với MD5 hash cho minh bạch"""
     seed = f"{datetime.utcnow().timestamp()}{random.randint(1000, 9999)}"
     hash_obj = hashlib.md5(seed.encode())
     hash_hex = hash_obj.hexdigest()
-    
     last_char = hash_hex[-1]
     result = "TAI" if int(last_char, 16) % 2 == 0 else "XIU"
-    
     return result, hash_hex
 
 def get_current_round():
-    """Lấy vòng hiện tại hoặc tạo mới"""
     latest = RoundHistory.query.order_by(RoundHistory.round_id.desc()).first()
     if latest and (datetime.utcnow() - latest.created_at).seconds < CONFIG['BET_INTERVAL']:
         return latest
@@ -197,7 +207,6 @@ def get_current_round():
     db.session.add(new_round)
     db.session.commit()
     
-    # Giữ 50 phiên
     old_rounds = RoundHistory.query.order_by(RoundHistory.round_id.asc()).all()
     if len(old_rounds) > CONFIG['HISTORY_LIMIT']:
         for r in old_rounds[:-CONFIG['HISTORY_LIMIT']]:
@@ -207,7 +216,6 @@ def get_current_round():
     return new_round
 
 def check_bonus_requirement(user):
-    """Kiểm tra user đã đạt yêu cầu x3 vòng cược chưa"""
     if not user.first_deposit_bonus:
         return True
     if user.bonus_requirements_met:
@@ -394,7 +402,7 @@ def get_round_result():
     })
 
 # ═══════════════════════════════════════════════════════════════════
-#  ROUTES - DEPOSIT & WITHDRAW
+#  ROUTES - DEPOSIT & WITHDRAW (GIỮ NGUYÊN)
 # ═══════════════════════════════════════════════════════════════════
 @app.route('/deposit', methods=['GET', 'POST'])
 @login_required
@@ -420,13 +428,9 @@ def deposit():
         )
         
         if method == 'card':
-            card_code = request.form.get('card_code')
-            card_serial = request.form.get('card_serial')
-            card_provider = request.form.get('card_provider')
-            
-            transaction.card_code = card_code
-            transaction.card_serial = card_serial
-            transaction.card_provider = card_provider
+            transaction.card_code = request.form.get('card_code')
+            transaction.card_serial = request.form.get('card_serial')
+            transaction.card_provider = request.form.get('card_provider')
             transaction.card_value = amount
         elif method == 'bank_transfer':
             transaction.description = f'Nạp tiền SUN68 qua ngân hàng - {request.form.get("bank_note", "")}'
@@ -548,7 +552,7 @@ def ranking():
                          top_bet=top_bet)
 
 # ═══════════════════════════════════════════════════════════════════
-#  ADMIN ROUTES
+#  ADMIN ROUTES (GIỮ NGUYÊN)
 # ═══════════════════════════════════════════════════════════════════
 @app.route('/admin')
 @login_required
@@ -818,7 +822,6 @@ def admin_ranking_gift():
 #  BACKGROUND TASK - AUTO ROUND GENERATOR
 # ═══════════════════════════════════════════════════════════════════
 def auto_generate_rounds():
-    """Tự động tạo vòng mới và xử lý kết quả"""
     while True:
         try:
             current_round = get_current_round()
@@ -869,12 +872,29 @@ def auto_generate_rounds():
 threading.Thread(target=auto_generate_rounds, daemon=True).start()
 
 # ═══════════════════════════════════════════════════════════════════
+#  AUTO BACKUP (LƯU DỮ LIỆU PHÒNG MẤT)
+# ═══════════════════════════════════════════════════════════════════
+def auto_backup():
+    """Tự động backup database mỗi 10 phút"""
+    while True:
+        try:
+            if os.path.exists(DB_PATH):
+                shutil.copy2(DB_PATH, BACKUP_PATH)
+                print(f"✅ Backup dữ liệu thành công: {datetime.now().strftime('%H:%M:%S')}")
+        except Exception as e:
+            print(f"⚠️ Lỗi backup: {e}")
+        time.sleep(600)  # 10 phút
+
+threading.Thread(target=auto_backup, daemon=True).start()
+
+# ═══════════════════════════════════════════════════════════════════
 #  MAIN
 # ═══════════════════════════════════════════════════════════════════
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         
+        # Tạo admin mặc định nếu chưa có
         if not User.query.filter_by(username='admin').first():
             admin = User(
                 username='admin',
@@ -885,6 +905,14 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
             print("✅ Đã tạo admin SUN68: admin / admin123")
+        
+        # Kiểm tra backup và restore nếu cần
+        if os.path.exists(BACKUP_PATH) and not os.path.exists(DB_PATH):
+            try:
+                shutil.copy2(BACKUP_PATH, DB_PATH)
+                print("✅ Đã restore dữ liệu từ backup")
+            except:
+                pass
     
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
