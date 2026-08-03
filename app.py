@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ═══════════════════════════════════════════════════════════════════
 #   SUN68 - CASINO TÀI XỈU ONLINE
-#   Version: 5.0 | Nhiều file templates
+#   Version: 5.0 | Giao diện Sunwin | Trang chủ đầy đủ
 #   Cấu trúc: app.py + app/templates/
 #   HQuanz Studio
 # ═══════════════════════════════════════════════════════════════════
@@ -189,10 +189,31 @@ def index():
     current_round = get_current_round()
     history = RoundHistory.query.order_by(RoundHistory.round_id.desc()).limit(50).all()
     
+    # ─── Lấy top ranking cho trang chủ ───
+    today = datetime.utcnow().date()
+    top_deposit_daily = db.session.query(
+        User.id, User.username, User.display_name,
+        func.sum(Transaction.amount).label('total_deposit')
+    ).join(Transaction)\
+     .filter(Transaction.type == 'deposit',
+             Transaction.status == 'approved',
+             func.date(Transaction.created_at) == today)\
+     .group_by(User.id)\
+     .order_by(func.sum(Transaction.amount).desc()).limit(5).all()
+    
+    top_bet = db.session.query(
+        User.id, User.username, User.display_name,
+        func.sum(BetHistory.bet_amount).label('total_bet')
+    ).join(BetHistory)\
+     .group_by(User.id)\
+     .order_by(func.sum(BetHistory.bet_amount).desc()).limit(5).all()
+    
     return render_template('index.html', 
                          current_round=current_round,
                          history=reversed(history),
-                         balance=current_user.balance if current_user.is_authenticated else 0)
+                         balance=current_user.balance if current_user.is_authenticated else 0,
+                         top_deposit_daily=top_deposit_daily,
+                         top_bet=top_bet)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
