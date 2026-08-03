@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # ═══════════════════════════════════════════════════════════════════
-#   SUN68 - CASINO TÀI XỈU ONLINE
-#   Version: 2.0 | Flask + SQLite | Render Optimized
+#   SUN68 - CASINO TÀI XỈU ONLINE (NHIỀU FILE)
+#   Version: 3.0 | Flask + SQLite | Giao diện Sunwin
 #   Cấu trúc: app.py + app/templates/
 # ═══════════════════════════════════════════════════════════════════
 
@@ -20,22 +20,15 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from sqlalchemy import func, desc
 
 # ═══════════════════════════════════════════════════════════════════
-#  CONFIG - QUAN TRỌNG: CHỈ ĐỊNH ĐÚNG ĐƯỜNG DẪN TEMPLATE
+#  CONFIG
 # ═══════════════════════════════════════════════════════════════════
-
-# Lấy đường dẫn tuyệt đối của thư mục chứa file app.py
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-
-# Chỉ định thư mục templates nằm trong app/templates/
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'app', 'templates')
 
-# Khởi tạo Flask với template_folder chỉ định
 app = Flask(__name__, template_folder=TEMPLATE_DIR)
-
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'sun68-secret-key-change-me')
 
-# ─── DATABASE (SQLite trong /tmp) ──────────────────────────────
-import shutil
+# ─── DATABASE ──────────────────────────────────────────────────────
 DATA_DIR = '/tmp/sun68_data'
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
@@ -398,7 +391,7 @@ def history():
     return render_template('history.html', bets=bets)
 
 # ═══════════════════════════════════════════════════════════════════
-#  API - BET
+#  API
 # ═══════════════════════════════════════════════════════════════════
 @app.route('/api/bet', methods=['POST'])
 @login_required
@@ -418,7 +411,7 @@ def place_bet():
     
     current_round = get_current_round()
     if (datetime.utcnow() - current_round.created_at).seconds > 50:
-        return jsonify({'error': 'Đã hết thời gian đặt cược, chờ vòng mới'}), 400
+        return jsonify({'error': 'Đã hết thời gian đặt cược'}), 400
     
     current_user.balance -= bet_amount
     current_user.total_bet += bet_amount
@@ -451,7 +444,7 @@ def get_round_result():
     })
 
 # ═══════════════════════════════════════════════════════════════════
-#  ADMIN ROUTES
+#  ADMIN
 # ═══════════════════════════════════════════════════════════════════
 def admin_required(f):
     @wraps(f)
@@ -549,29 +542,8 @@ def admin_reject_transaction(txn_id):
     flash('Đã từ chối giao dịch', 'warning')
     return redirect(url_for('admin_transactions'))
 
-@app.route('/admin/bank-info', methods=['GET', 'POST'])
-@login_required
-@admin_required
-def admin_bank_info():
-    bank_info = {
-        'bank_name': 'Ngân hàng TMCP Ngoại thương Việt Nam (Vietcombank)',
-        'account_number': '1234567890',
-        'account_holder': 'SUN68 CASINO',
-        'branch': 'Hà Nội'
-    }
-    
-    if request.method == 'POST':
-        bank_info['bank_name'] = request.form.get('bank_name')
-        bank_info['account_number'] = request.form.get('account_number')
-        bank_info['account_holder'] = request.form.get('account_holder')
-        bank_info['branch'] = request.form.get('branch')
-        flash('Đã cập nhật thông tin ngân hàng', 'success')
-        return redirect(url_for('admin_bank_info'))
-    
-    return render_template('admin/bank_info.html', bank_info=bank_info)
-
 # ═══════════════════════════════════════════════════════════════════
-#  BACKGROUND TASK - AUTO ROUND
+#  BACKGROUND TASK
 # ═══════════════════════════════════════════════════════════════════
 def auto_generate_rounds():
     while True:
@@ -608,7 +580,7 @@ def auto_generate_rounds():
             db.session.commit()
             print(f"✅ SUN68 Vòng {new_round.round_id}: {result}")
         except Exception as e:
-            print(f"⚠️ Lỗi auto_generate_rounds: {e}")
+            print(f"⚠️ Lỗi auto: {e}")
             db.session.rollback()
         time.sleep(5)
 
@@ -625,7 +597,7 @@ if __name__ == '__main__':
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-            print("✅ Đã tạo admin SUN68: admin / admin123")
+            print("✅ Admin SUN68: admin / admin123")
     
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
