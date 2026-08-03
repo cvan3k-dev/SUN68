@@ -1,41 +1,5 @@
-{% extends "layout.html" %}
-
-{% block title %}Lịch sử cược SUN68{% endblock %}
-
+{% extends "base.html" %}
+{% block title %}Lịch sử{% endblock %}
 {% block content %}
-<div class="card p-4">
-    <h3 class="text-center text-gold"><i class="fas fa-list"></i> Lịch sử cược SUN68</h3>
-    <div class="table-responsive">
-        <table class="table table-dark">
-            <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Vòng</th>
-                    <th>Cược</th>
-                    <th>Số tiền</th>
-                    <th>Kết quả</th>
-                    <th>Thắng</th>
-                    <th>Thời gian</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for bet in bets %}
-                <tr>
-                    <td>{{ loop.index }}</td>
-                    <td>{{ bet.round_id }}</td>
-                    <td>{{ bet.bet_type }}</td>
-                    <td>{{ bet.bet_amount|int|format_currency }}</td>
-                    <td>{{ bet.result or 'Đang chờ' }}</td>
-                    <td class="{% if bet.is_win %}text-success{% else %}text-danger{% endif %}">
-                        {{ bet.win_amount|int|format_currency if bet.win_amount else '-' }}
-                    </td>
-                    <td>{{ bet.created_at.strftime('%H:%M %d/%m') }}</td>
-                </tr>
-                {% else %}
-                <tr><td colspan="7" class="text-center">Chưa có lịch sử cược SUN68</td></tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
+<div class="card-sun p-4"><h4 class="text-gold">Lịch sử cược</h4>...</div>
 {% endblock %}
