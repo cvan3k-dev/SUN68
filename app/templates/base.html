@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUN68 - {% block title %}Casino Online{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Roboto', sans-serif;
+            min-height: 100vh;
+        }
+        /* Navbar Sunwin style */
+        .navbar-sun {
+            background: linear-gradient(180deg, #1a0a0a 0%, #0d0505 100%);
+            border-bottom: 2px solid #d4af37;
+            padding: 10px 0;
+            box-shadow: 0 4px 20px rgba(212, 175, 55, 0.15);
+        }
+        .navbar-sun .brand {
+            font-size: 28px;
+            font-weight: 900;
+            color: #d4af37;
+            text-decoration: none;
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.3);
+        }
+        .navbar-sun .brand i { color: #ff0044; margin-right: 8px; }
+        .navbar-sun .nav-link {
+            color: #ccc !important;
+            font-weight: 500;
+            transition: 0.3s;
+            padding: 8px 16px;
+            border-radius: 8px;
+        }
+        .navbar-sun .nav-link:hover { color: #d4af37 !important; background: rgba(212, 175, 55, 0.1); }
+        .navbar-sun .balance-box {
+            background: rgba(212, 175, 55, 0.12);
+            border: 1px solid #d4af37;
+            border-radius: 8px;
+            padding: 6px 18px;
+            color: #d4af37;
+            font-weight: 700;
+        }
+        .navbar-sun .balance-box i { margin-right: 8px; }
+
+        /* Cards Sunwin style */
+        .card-sun {
+            background: linear-gradient(145deg, #141010, #1a1212);
+            border: 1px solid #2a1a1a;
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            transition: 0.3s;
+        }
+        .card-sun:hover { border-color: #d4af37; box-shadow: 0 8px 40px rgba(212, 175, 55, 0.08); }
+        .card-sun .card-header {
+            background: linear-gradient(90deg, rgba(212, 175, 55, 0.12), transparent);
+            border-bottom: 1px solid #2a1a1a;
+            padding: 15px 20px;
+            font-weight: 700;
+            color: #d4af37;
+            border-radius: 16px 16px 0 0;
+        }
+
+        /* Buttons Sunwin */
+        .btn-tai {
+            background: linear-gradient(145deg, #cc0000, #990000);
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            padding: 14px 30px;
+            border-radius: 12px;
+            transition: 0.3s;
+            box-shadow: 0 4px 20px rgba(204, 0, 0, 0.3);
+            width: 100%;
+        }
+        .btn-tai:hover { transform: scale(1.03); box-shadow: 0 6px 30px rgba(204, 0, 0, 0.5); }
+        .btn-xiu {
+            background: linear-gradient(145deg, #0044cc, #002299);
+            border: none;
+            color: #fff;
+            font-weight: 700;
+            padding: 14px 30px;
+            border-radius: 12px;
+            transition: 0.3s;
+            box-shadow: 0 4px 20px rgba(0, 68, 204, 0.3);
+            width: 100%;
+        }
+        .btn-xiu:hover { transform: scale(1.03); box-shadow: 0 6px 30px rgba(0, 68, 204, 0.5); }
+        .btn-gold {
+            background: linear-gradient(145deg, #d4af37, #b8960f);
+            border: none;
+            color: #0a0a0a;
+            font-weight: 700;
+            padding: 10px 24px;
+            border-radius: 10px;
+            transition: 0.3s;
+        }
+        .btn-gold:hover { transform: scale(1.03); box-shadow: 0 4px 20px rgba(212, 175, 55, 0.4); }
+
+        /* Result Display */
+        .result-box-sun {
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            font-size: 3rem;
+            font-weight: 900;
+            margin: 20px 0;
+            transition: 0.5s;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .result-box-sun.tai {
+            background: linear-gradient(145deg, #cc0000, #880000);
+            border: 2px solid #ff4444;
+            box-shadow: 0 0 60px rgba(255, 0, 0, 0.3);
+        }
+        .result-box-sun.xiu {
+            background: linear-gradient(145deg, #0044cc, #002288);
+            border: 2px solid #4444ff;
+            box-shadow: 0 0 60px rgba(0, 68, 255, 0.3);
+        }
+        .result-box-sun.waiting {
+            background: linear-gradient(145deg, #222, #111);
+            border: 2px solid #444;
+        }
+        .result-box-sun .hash {
+            font-size: 0.8rem;
+            color: rgba(255,255,255,0.5);
+            margin-top: 8px;
+            font-weight: 400;
+        }
+
+        /* History chips */
+        .chip-tai {
+            background: #cc0000;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 14px;
+            margin: 2px;
+            display: inline-block;
+            min-width: 36px;
+            text-align: center;
+        }
+        .chip-xiu {
+            background: #0044cc;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 14px;
+            margin: 2px;
+            display: inline-block;
+            min-width: 36px;
+            text-align: center;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar-sun .brand { font-size: 20px; }
+            .result-box-sun { font-size: 2rem; min-height: 90px; padding: 20px; }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0a0a0a; }
+        ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 10px; }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- NAVBAR -->
+    <nav class="navbar-sun">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <a class="brand" href="{{ url_for('index') }}">
+                    <i class="fas fa-crown"></i> SUN68
+                </a>
+                <div class="d-flex align-items-center gap-3">
+                    {% if current_user.is_authenticated %}
+                        {% if current_user.is_admin %}
+                            <a class="nav-link" href="{{ url_for('admin_dashboard') }}">
+                                <i class="fas fa-shield-alt"></i> Admin
+                            </a>
+                        {% endif %}
+                        <span class="balance-box">
+                            <i class="fas fa-wallet"></i>
+                            {{ current_user.balance|int|format_currency }}
+                        </span>
+                        <a class="nav-link" href="{{ url_for('profile') }}">
+                            <i class="fas fa-user"></i> {{ current_user.display_name or current_user.username }}
+                        </a>
+                        <a class="nav-link" href="{{ url_for('logout') }}">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    {% else %}
+                        <a class="nav-link" href="{{ url_for('login') }}">
+                            <i class="fas fa-sign-in-alt"></i> Đăng nhập
+                        </a>
+                        <a class="nav-link" href="{{ url_for('register') }}">
+                            <i class="fas fa-user-plus"></i> Đăng ký
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="container py-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="text-center py-3" style="border-top:1px solid #1a1a1a;">
+        <p class="text-muted mb-0 small">© 2025 SUN68 - Sân chơi đẳng cấp. 18+</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
